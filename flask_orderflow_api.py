@@ -1,34 +1,40 @@
-
 from flask import Flask, jsonify
 import requests
 
 app = Flask(__name__)
 
-def get_orderbook_mexc(symbol="BTCUSDT", depth=20):
+def get_orderbook_mexc(symbol="BTCUSDT"):
     try:
         url = f"https://api.mexc.com/api/v3/depth?symbol={symbol}&limit=100"
         res = requests.get(url, timeout=10)
         data = res.json()
         bids = [[float(p), float(v)] for p, v in data["bids"]]
         asks = [[float(p), float(v)] for p, v in data["asks"]]
-        return bids[:depth], asks[:depth]
+        return bids, asks
     except Exception as e:
         return [], []
 
-def get_orderbook_lbank(symbol="btc_usdt", depth=20):
+def get_orderbook_lbank(symbol="btc_usdt"):
     try:
         url = f"https://api.lbank.info/v1/depth.do?symbol={symbol}&size=100&type=step0"
         res = requests.get(url, timeout=10)
         data = res.json()
         bids = [[float(p), float(v)] for p, v in data["bids"]]
         asks = [[float(p), float(v)] for p, v in data["asks"]]
-        return bids[:depth], asks[:depth]
+        return bids, asks
     except Exception as e:
         return [], []
 
-def extract_levels(bids, asks, top_n=5):
-    supports = sorted(bids[10:], key=lambda x: x[1], reverse=True)[:top_n]
-    resistances = sorted(asks[10:], key=lambda x: x[1], reverse=True)[:top_n]
+def extract_heavy_levels(bids, asks, top_n=5, threshold_ratio=3.0):
+    def filter_heavy(orders):
+        if not orders: return []
+        volumes = [v for _, v in orders]
+        avg = sum(volumes) / len(volumes)
+        heavy = [(p, v) for p, v in orders if v >= avg * threshold_ratio]
+        return sorted(heavy, key=lambda x: x[1], reverse=True)[:top_n]
+    
+    supports = filter_heavy(bids)
+    resistances = filter_heavy(asks)
     return supports, resistances
 
 @app.route('/orderflow/<symbol>', methods=['GET'])
@@ -39,8 +45,8 @@ def get_orderflow(symbol):
     mexc_bids, mexc_asks = get_orderbook_mexc(symbol_mexc)
     lbank_bids, lbank_asks = get_orderbook_lbank(symbol_lbank)
 
-    mexc_supports, mexc_resistances = extract_levels(mexc_bids, mexc_asks)
-    lbank_supports, lbank_resistances = extract_levels(lbank_bids, lbank_asks)
+    mexc_supports, mexc_resistances = extract_heavy_levels(mexc_bids, mexc_asks)
+    lbank_supports, lbank_resistances = extract_heavy_levels(lbank_bids, lbank_asks)
 
     data = {
         "symbol": symbol_mexc,
