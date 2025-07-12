@@ -27,8 +27,8 @@ def get_orderbook_lbank(symbol="btc_usdt", depth=20):
         return [], []
 
 def extract_levels(bids, asks, top_n=5):
-    supports = sorted(bids, key=lambda x: x[1], reverse=True)[:top_n]
-    resistances = sorted(asks, key=lambda x: x[1], reverse=True)[:top_n]
+    supports = sorted(bids[10:], key=lambda x: x[1], reverse=True)[:top_n]
+    resistances = sorted(asks[10:], key=lambda x: x[1], reverse=True)[:top_n]
     return supports, resistances
 
 @app.route('/orderflow/<symbol>', methods=['GET'])
