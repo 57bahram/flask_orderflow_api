@@ -26,17 +26,14 @@ def get_orderbook_lbank(symbol="btc_usdt"):
     except Exception:
         return [], []
 
-def filter_heavy(orders, current_price, min_distance_ratio=0.0015, ratio=3.0, top_n=5):
+def filter_heavy(orders, ratio=3.0, top_n=10):
     if not orders:
         return []
     volumes = [v for _, v in orders]
     avg = sum(volumes) / len(volumes)
     threshold = avg * ratio
-    return sorted(
-        [(p, v) for p, v in orders if v >= threshold and abs(p - current_price) >= current_price * min_distance_ratio],
-        key=lambda x: x[1],
-        reverse=True
-    )[:top_n]
+    return sorted([(p, v) for p, v in orders if v >= threshold], key=lambda x: x[1], reverse=True)[:top_n]
+
 
 @app.route('/orderflow/<symbol>', methods=['GET'])
 def get_orderflow(symbol):
