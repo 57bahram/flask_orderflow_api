@@ -44,16 +44,18 @@ def get_orderflow(symbol):
     if not mexc_bids or not mexc_asks:
         return jsonify({"error": "No MEXC data"})
     mexc_price = (mexc_bids[0][0] + mexc_asks[0][0]) / 2
-    mexc_supports = filter_heavy(mexc_bids, mexc_price)
-    mexc_resistances = filter_heavy(mexc_asks, mexc_price)
+    mexc_supports = filter_heavy(mexc_bids, top_n=10)
+    mexc_resistances = filter_heavy(mexc_asks, top_n=10)
+
 
     # LBank
     lbank_bids, lbank_asks = get_orderbook_lbank(symbol_lbank)
     lbank_supports, lbank_resistances = [], []
     if lbank_bids and lbank_asks:
         lbank_price = (lbank_bids[0][0] + lbank_asks[0][0]) / 2
-        lbank_supports = filter_heavy(lbank_bids, lbank_price)
-        lbank_resistances = filter_heavy(lbank_asks, lbank_price)
+        lbank_supports = filter_heavy(lbank_bids, top_n=10)
+        lbank_resistances = filter_heavy(lbank_asks, top_n=10)
+
 
     return jsonify({
         "symbol": symbol_mexc,
