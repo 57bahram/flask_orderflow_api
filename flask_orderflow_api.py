@@ -26,7 +26,7 @@ def get_orderbook_lbank(symbol="btc_usdt"):
     except Exception:
         return [], []
 
-def filter_heavy(orders, ratio=3.0, top_n=10):
+def filter_heavy(orders, ratio=1.5, top_n=10):
     if not orders:
         return []
     volumes = [v for _, v in orders]
