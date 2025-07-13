@@ -1,9 +1,11 @@
 
 from flask import Flask, jsonify
 import requests
+from flask_cors import CORS
+
 
 app = Flask(__name__)
-
+CORS(app)
 def get_orderbook_mexc(symbol="BTCUSDT"):
     try:
         url = f"https://api.mexc.com/api/v3/depth?symbol={symbol}&limit=100"
