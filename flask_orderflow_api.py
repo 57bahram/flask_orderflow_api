@@ -1,8 +1,9 @@
-
 from flask import Flask, jsonify
 import requests
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 def get_orderbook_mexc(symbol="BTCUSDT"):
     try:
@@ -31,31 +32,22 @@ def filter_heavy(orders, top_n=10):
         return []
     return sorted(orders, key=lambda x: x[1], reverse=True)[:top_n]
 
-
-
-
 @app.route('/orderflow/<symbol>', methods=['GET'])
 def get_orderflow(symbol):
     symbol_mexc = symbol.upper()
     symbol_lbank = symbol.lower().replace("usdt", "_usdt")
 
-    # MEXC
     mexc_bids, mexc_asks = get_orderbook_mexc(symbol_mexc)
     if not mexc_bids or not mexc_asks:
         return jsonify({"error": "No MEXC data"})
-    mexc_price = (mexc_bids[0][0] + mexc_asks[0][0]) / 2
-    mexc_supports = filter_heavy(mexc_bids, top_n=10)
-    mexc_resistances = filter_heavy(mexc_asks, top_n=10)
+    mexc_supports = filter_heavy(mexc_bids)
+    mexc_resistances = filter_heavy(mexc_asks)
 
-
-    # LBank
     lbank_bids, lbank_asks = get_orderbook_lbank(symbol_lbank)
     lbank_supports, lbank_resistances = [], []
     if lbank_bids and lbank_asks:
-        lbank_price = (lbank_bids[0][0] + lbank_asks[0][0]) / 2
-        lbank_supports = filter_heavy(lbank_bids, top_n=10)
-        lbank_resistances = filter_heavy(lbank_asks, top_n=10)
-
+        lbank_supports = filter_heavy(lbank_bids)
+        lbank_resistances = filter_heavy(lbank_asks)
 
     return jsonify({
         "symbol": symbol_mexc,
@@ -71,3 +63,4 @@ def get_orderflow(symbol):
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)
+
