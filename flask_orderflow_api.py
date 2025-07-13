@@ -2,8 +2,6 @@
 from flask import Flask, jsonify
 import requests
 
-
-
 app = Flask(__name__)
 
 def get_orderbook_mexc(symbol="BTCUSDT"):
